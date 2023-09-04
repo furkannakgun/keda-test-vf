@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keda-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keda-deployment
+  template:
+    metadata:
+      labels:
+        app: keda-deployment
+    spec:
+      containers:
+      - name: keda-deployment
+        image: furkanakgun/azureagent:latest
+        env:
+        - name: AZP_URL
+          value: https://dev.azure.com/furkanakgun81
+        - name: AZP_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: azure-devops-group-temmuz
+              key: AZP_TOKEN
+        - name: AZP_AGENT_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: AZP_POOL
+          value: "azure-keda"
+
+      imagePullSecrets:
+      - name: docker-cred
+      # initContainers:
+      # - name: debug
+      #   image: busybox
+      #   command: ["/bin/sh","-c","while true; do sleep 60; done"]
+---
+apiVersion: v1
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJoYXJib3IudGFhcy52b2RhZm9uZS5sb2NhbCI6eyJ1c2VybmFtZSI6ImFkbWluIiwicGFzc3dvcmQiOiJ0YWFzYWRtaW4iLCJlbWFpbCI6Imdva2FscC5tZXJpY0B2b2RhZm9uZS5jb20iLCJhdXRoIjoiWVdSdGFXNDZkR0ZoYzJGa2JXbHUifX19
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: docker-cred
+type: kubernetes.io/dockerconfigjson

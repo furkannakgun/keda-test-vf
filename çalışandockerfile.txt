@@ -1,0 +1,175 @@
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        ca-certificates \
+        git \
+        iputils-ping \
+        libcurl4 \
+        libicu66 \
+        libssl1.0 \
+        libunwind8 \
+        netcat \
+        unzip \
+        wget
+
+# Install Azure DevOps agent
+ARG AZP_AGENT_VERSION=3.220.0
+RUN wget https://vstsagentpackage.azureedge.net/agent/${AZP_AGENT_VERSION}/vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz && \
+    mkdir -p /azp && \
+    tar -zxvf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz -C /azp && \
+    rm -rf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz
+
+# Add a user to run the agent
+RUN useradd -m -U -s /bin/bash azp
+
+# Change permissions of the /azp directory
+RUN chown -R azp:azp /azp
+
+# Set the working directory
+WORKDIR /azp
+
+# Copy the start script
+COPY start.sh .
+RUN chmod +x start.sh
+
+# Set the user
+USER azp
+
+# Run the start script
+CMD ["./start.sh"]
+
+
+----------------------------------------------------------------------------------------------------
+
+
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        ca-certificates \
+        git \
+        iputils-ping \
+        libcurl4 \
+        libicu66 \
+        libssl1.0 \
+        libunwind8 \
+        netcat \
+        unzip \
+        wget \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+
+# Install Docker as rootless
+RUN curl -o docker-rootless.sh -fsSL https://get.docker.com/rootless && \
+    chmod +x docker-rootless.sh && \
+    sudo -Hu azp sh docker-rootless.sh
+
+# Add Docker to PATH
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/bin/docker"
+
+# Install Azure DevOps agent
+ARG AZP_AGENT_VERSION=3.220.0
+RUN wget https://vstsagentpackage.azureedge.net/agent/${AZP_AGENT_VERSION}/vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz && \
+    mkdir -p /azp && \
+    tar -zxvf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz -C /azp && \
+    rm -rf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz
+
+# Add a user to run the agent
+RUN useradd -m -U -s /bin/bash azp
+
+# Add 'azp' user to docker group
+RUN usermod -aG docker azp
+
+# Change permissions of the /azp directory
+RUN chown -R azp:azp /azp
+
+# Set the working directory
+WORKDIR /azp
+
+# Copy the start script
+COPY start.sh .
+RUN chmod +x start.sh
+
+# Set the user
+USER azp
+
+# Run the start script
+CMD ["./start.sh"]
+
+
+
+-----------------------------------------------------------------------------
+
+
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND noninteractive
+RUN ln -fs /usr/share/zoneinfo/Europe/Istanbul /etc/localtime
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        tzdata \
+        ca-certificates \
+        apt-transport-https \
+        ca-certificates \
+        git \
+        iputils-ping \
+        libcurl4 \
+        libicu66 \
+        libssl1.0 \
+        libunwind8 \
+        netcat \
+        unzip \
+        gss-ntlmssp \
+        sudo \
+        uidmap \
+        iptables \
+        wget
+
+# Load ip_tables module
+RUN modprobe ip_tables
+
+# Add a user to run the agent
+RUN useradd -m -U -s /bin/bash azp
+
+# Install Docker as rootless
+RUN SKIP_IPTABLES=1 curl -o docker-rootless.sh -fsSL https://get.docker.com/rootless && \
+    chmod +x docker-rootless.sh && \
+    sudo -Hu azp sh docker-rootless.sh
+
+# Install Azure DevOps agent
+ARG AZP_AGENT_VERSION=3.220.0
+RUN wget https://vstsagentpackage.azureedge.net/agent/${AZP_AGENT_VERSION}/vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz && \
+    mkdir -p /azp && \
+    tar -zxvf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz -C /azp && \
+    rm -rf vsts-agent-linux-x64-${AZP_AGENT_VERSION}.tar.gz
+
+# Add 'azp' user to docker group
+RUN usermod -aG docker azp
+
+# Change permissions of the /azp directory
+RUN chown -R azp:azp /azp
+
+# Set the working directory
+WORKDIR /azp
+
+# Copy the start script
+COPY start.sh .
+RUN chmod +x start.sh
+
+# Set the user
+USER azp
+
+# Run the start script
+CMD ["./start.sh"]
